@@ -15,9 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from bid import views
+from bid.views import BidListView, BidDetailView
+from users.views import profile, RegisterUserView, SignUpView
+from django.contrib.auth.views import LogoutView
+from django.urls import reverse_lazy
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',views.index)
+    path('', BidListView.as_view(), name='home'),
+    path('profile/', profile, name='profile'),
+    path('bids/<slug:slug>/', BidDetailView.as_view(), name='bid-detail'),
+    path('register/', RegisterUserView.as_view(), name='register'),
+    path('login/', SignUpView.as_view(), name='login'),
+    path('logout', LogoutView.as_view(next_page=reverse_lazy('home')), name='logout' )
 ]
