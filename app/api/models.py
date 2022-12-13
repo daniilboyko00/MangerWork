@@ -29,6 +29,12 @@ class Bid(models.Model):
         ('INACTIVE', 'Неактивные')
     )
 
+    TRADE_STATUS_CHOICES = (
+        (1,'Направление предложений'),
+        (2, 'Закрытый период'),
+        (4, 'Итоги торгов')
+    )
+
     purchase_order = models.IntegerField(verbose_name='Заявка на покупку', blank=False, null=False, unique=True, primary_key=True)
     application_date = models.DateTimeField(verbose_name='Дата подачи заявки')
     application_validity_period = models.DateTimeField(verbose_name='Срок действия заявки')
@@ -52,11 +58,13 @@ class Bid(models.Model):
     scraping_date = models.DateTimeField('Дата последнего парсинга', auto_now_add=True)
     slug = models.SlugField(unique=True,db_index=True, verbose_name='URL')
     comment = models.TextField('Комментарий', null=True, blank=True, default=None)
-    manager_id = models.ForeignKey(MyCustomUser, on_delete=models.CASCADE, null=True, default=None)
+    trader = models.ForeignKey(MyCustomUser, on_delete=models.CASCADE, null=True, default=None)
     tnvedcode = models.BigIntegerField('Код', null=True)
     number_of_subcount = models.IntegerField('Количество заявок на покупку', null=True)
     subcount_link = models.URLField('Заявки на покупку', null=True)
     status = models.CharField(max_length=30,choices=STATUS_CHOICES, default='ACTIVE')
+    trade_status = models.CharField('Статус торгов', choices=TRADE_STATUS_CHOICES, max_length=100, null=True, default=None)
+    trade_status_message = models.CharField(max_length=255, null=True, default=None)
 
 
     class Meta:
@@ -79,22 +87,33 @@ class Offer(models.Model):
     validity = models.DateTimeField('Срок действия заявки')
     trade_category = models.CharField('Категория торгов', max_length=255)
     country = models.CharField('Страна', max_length=255, null=True)
-    bid_id = models.ForeignKey(
+    bid = models.ForeignKey(
         Bid,
         to_field='purchase_order',
         on_delete=models.DO_NOTHING,
         null=True)
+    status_in_trade = models.CharField('Статус в торгах',max_length=255, default=None)
+    trader = models.ForeignKey(MyCustomUser, on_delete=models.CASCADE, null=True, default=None)
+    
+
+    def __str__(self) -> str:
+        return f'Торговое предложение №{self.number}'
+
 
 
 class Arhive(models.Model):
     date = models.DateTimeField(auto_now_add=True)
-    bid_id = models.OneToOneField(Bid,
-    to_field='purchase_order',
-    on_delete=models.DO_NOTHING, primary_key=True)
+    bid = models.OneToOneField(Bid,
+        to_field='purchase_order',
+        on_delete=models.DO_NOTHING, primary_key=True)
+
+
+
+
 
 
 class Auth_token(models.Model):
-    pass
+    value = models.CharField('auth-token', max_length=255)
 
 
 

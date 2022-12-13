@@ -9,22 +9,14 @@ sys.path.append(r"D:\MangerWork\app")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 django.setup()
 
-from api.models import Offer
+from api.models import Offer, Bid
 from dateutil import parser
 
 
 
-def parse_trades():
+def parse_status_of_trades(pages):
     cookies = {
-        '_ym_uid': '1669898926163754051',
-        '_ym_d': '1669898926',
-        '_gcl_au': '1.1.72392559.1669966434',
-        '_gid': 'GA1.2.33312829.1670247244',
-        '_ym_isad': '1',
-        'session-cookie': '172e3b0c542bd5f04148f3bcbeb261f58a4794d09efe4f6200e557f20fe495793b4d72675710957debaa3129311971b1',
-        '_ym_visorc': 'w',
-        '_ga': 'GA1.1.338988082.1669966434',
-        '_ga_JBLWJN4EG6': 'GS1.1.1670346679.5.1.1670346808.21.0.0',
+    'session-cookie': '1730597102a006174148f3bcbeb261f5bb9fda7a3b13720d446e24a3eb4d82c71ec6c71f3733a3f12a36a7d6952eca14',
     }
 
     headers = {
@@ -32,7 +24,7 @@ def parse_trades():
         'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'Connection': 'keep-alive',
         'Content-Type': 'application/json',
-        # 'Cookie': '_ym_uid=1669898926163754051; _ym_d=1669898926; _gcl_au=1.1.72392559.1669966434; _gid=GA1.2.33312829.1670247244; _ym_isad=1; session-cookie=172e3b0c542bd5f04148f3bcbeb261f58a4794d09efe4f6200e557f20fe495793b4d72675710957debaa3129311971b1; _ym_visorc=w; _ga=GA1.1.338988082.1669966434; _ga_JBLWJN4EG6=GS1.1.1670346679.5.1.1670346808.21.0.0',
+        # 'Cookie': 'session-cookie=1730597102a006174148f3bcbeb261f5bb9fda7a3b13720d446e24a3eb4d82c71ec6c71f3733a3f12a36a7d6952eca14',
         'Origin': 'https://ppt.butb.by',
         'Referer': 'https://ppt.butb.by/ppt-new/profile/bids/downwardExpirationDate',
         'Sec-Fetch-Dest': 'empty',
@@ -42,11 +34,11 @@ def parse_trades():
         'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'x-auth-token': '{646CCCA0-352A-42B8-A26D-6C83B19DD569}',
+        'x-auth-token': '{37BF5AA0-D976-4BAE-9B9E-67730920C5D9}',
         'x-language': 'ru',
     }
-
-    json_data = {
+    for i in range(pages):
+        json_data = {
         'typeTrade': 4,
         'mainFilters': {
             'roleInTrade': 3,
@@ -60,11 +52,31 @@ def parse_trades():
             'description': None,
             'tnvedCode': None,
         },
-        'paginationFilters': {},
+        'paginationFilters': {
+            'page': i,
+            'pageSize': 50,
+        },
     }
+        response = requests.post('https://ppt.butb.by/PPT-Rest/api/trades', cookies=cookies, headers=headers, json=json_data)
+        for j in range(len(response.json()['list'])):
+            if len(response.json()['list']) < 2:
+                print(i)
+                break
+            trade_json = response.json()['list'][j]
+            Bid.objects.filter(purchase_order = int(trade_json['id'])).update(
+                trade_status = int(trade_json['tradeStatus']['code']),
+                trade_status_message = trade_json['tradeStatus']['message']
+            )
+            for offer in trade_json['offers']:
+                Offer.objects.filter(number=str(offer['id'])).update(
+                    status_in_trade = offer['statusDescription'],
+                    bid = trade_json['id']
+                )
+        if response.json()['list'] == []:
+            break
 
-    response = requests.post('https://ppt.butb.by/PPT-Rest/api/trades',   headers=headers, json=json_data)
-    print(response.json())
+
+
 
 def parse_offers(token: str ,pages: int):
     cookies = {
@@ -200,6 +212,7 @@ def get_offers_for_bid(bid_id:int, token:str, pages:int) -> None:
             'searchFilters': {},
         }
         response = requests.post('https://ppt.butb.by/PPT-Rest/api/offers/own', cookies=cookies, headers=headers, json=json_data)
+        print(response.json())
         for j in range(len(response.json()['list'])):
             offer_json = response.json()['list'][j]
             Offer.objects.filter(number=offer_json['id']).update(
@@ -208,6 +221,8 @@ def get_offers_for_bid(bid_id:int, token:str, pages:int) -> None:
             if (len(response.json()['list']) < 2):
                 print(i, 'thats all')
 
-# get_offers_for_bid(539014,'905DD217-E592-4609-A9F0-6343EF70FD02', 10)
+# get_offers_for_bid(539014,'37BF5AA0-D976-4BAE-9B9E-67730920C5D9', 10)
 
 # parse_offers('905DD217-E592-4609-A9F0-6343EF70FD02',20)
+
+# parse_status_of_trades(10)
