@@ -9,7 +9,8 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 django.setup()
 
-from bid.models import Bid
+from api.models import Bid
+
 
 
 def save_and_return_detail_bid_json(id:int):

@@ -2,7 +2,7 @@ import requests
 import time
 import sys
 
-sys.path.append(r"D:\MangerWork\app")
+sys.path.append(r"/home/daniil/codesafe/butb/MangerWork-dev/app")
 
 import os
 import django
@@ -11,7 +11,7 @@ from django.db.utils import IntegrityError
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 django.setup()
 
-from bid.models import Bid
+from api.models import Bid
 from dateutil import parser
 from datetime import datetime
 
