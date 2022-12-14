@@ -2,6 +2,7 @@ import requests
 import os
 import django
 from django.db.utils import IntegrityError
+from django.utils import timezone
 import sys
 sys.path.append(r"D:\MangerWork\app")
 
@@ -59,18 +60,53 @@ def parse_status_of_trades(token,pages):
     }
         response = requests.post('https://ppt.butb.by/PPT-Rest/api/trades', cookies=cookies, headers=headers, json=json_data)
         for j in range(len(response.json()['list'])):
-            if len(response.json()['list']) < 2:
-                break
             trade_json = response.json()['list'][j]
             Bid.objects.filter(purchase_order = int(trade_json['id'])).update(
                 trade_status = int(trade_json['tradeStatus']['code']),
                 trade_status_message = trade_json['tradeStatus']['message']
             )
-            for offer in trade_json['offers']:
-                Offer.objects.filter(number=str(offer['id'])).update(
-                    status_in_trade = offer['statusDescription'],
-                    bid = trade_json['id']
-                )
+            try:
+                bid = Bid.objects.get(purchase_order=int(trade_json['id']))
+            except Bid.DoesNotExist:
+                new_bid = Bid(
+                    purchase_order = int(trade_json['id']),
+                    application_date =  None,
+                    application_validity_period = None,
+                    procurement_name = trade_json['productname'],
+                    product_information = None,
+                    brand = None,
+                    buyer_country = trade_json['country'],
+                    qntunits = trade_json['qntunits'],
+                    producing_country = None,
+                    terms_of_payment = None,
+                    delivery_conditions = None,
+                    delivery_time = None,
+                    exposure_time =  None,
+                    application_is_bidding = trade_json['attrTradings']['name'],
+                    price = trade_json['price'],
+                    number_of_goods = trade_json['quantity'],
+                    cost = trade_json['fullCost'],
+                    currency = trade_json['currency'],
+                    technical_documentation_file_name = None,
+                    application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{trade_json['id']}",
+                    scraping_date = timezone.now(),
+                    slug = int(trade_json['id']),
+                    tnvedcode = None,
+                    number_of_subcount = trade_json.get('viewSubcount') if trade_json.get('viewSubcount') else None,
+                    subcount_link = None
+                    )
+                new_bid.save()
+                bid = Bid.objects.get(purchase_order=int(trade_json['id']))
+            if trade_json.get('offers'):
+                for offer in trade_json['offers']:
+                    try:
+                        offer_obj = Offer.objects.get(number=int(offer['id']))
+                    except Offer.DoesNotExist:
+                        continue
+                    Offer.objects.filter(number=int(offer['id'])).update(
+                        status_in_trade = offer['statusDescription']
+                    )
+                    bid.offer.add(offer_obj)
         if response.json()['list'] == []:
             break
 
@@ -147,7 +183,7 @@ def parse_offers(token: str ,pages: int):
                 offer_json = response.json()['list'][j]
                 try:
                     offer = Offer(
-                        number = offer_json['id'],
+                        number = int(offer_json['id']),
                         product_name = offer_json['productname'],
                         country = offer_json['country'],
                         price = float(offer_json['price']) ,
@@ -159,7 +195,7 @@ def parse_offers(token: str ,pages: int):
                         trade_category = offer_json['attrTradings']['name']
                     )
                     offer.save()
-                except IntegrityError:
+                except IntegrityError as e:
                     Offer.objects.filter(number=offer_json['id']).update(
                         number = offer_json['id'],
                         product_name = offer_json['productname'],
@@ -172,10 +208,12 @@ def parse_offers(token: str ,pages: int):
                         validity = parser.parse(offer_json['validity']) ,
                         trade_category = offer_json['attrTradings']['name']
                     )
-                if len(response.json()['list'])< 2:
-                    print(i,'thats all')
-        except TypeError:
-            raise TypeError
+            if len(response.json()['list'])< 2:
+                print(i,'thats all')
+        except Exception as e:
+            raise e
+
+
 
 def get_offers_for_bid(bid_id:int, token:str, pages:int) -> None:
     cookies = {
@@ -211,7 +249,6 @@ def get_offers_for_bid(bid_id:int, token:str, pages:int) -> None:
             'searchFilters': {},
         }
         response = requests.post('https://ppt.butb.by/PPT-Rest/api/offers/own', cookies=cookies, headers=headers, json=json_data)
-        print(response.json())
         for j in range(len(response.json()['list'])):
             offer_json = response.json()['list'][j]
             Offer.objects.filter(number=offer_json['id']).update(
@@ -219,12 +256,6 @@ def get_offers_for_bid(bid_id:int, token:str, pages:int) -> None:
             )
             if (len(response.json()['list']) < 2):
                 print(i, 'thats all')
-
-# get_offers_for_bid(539014,'37BF5AA0-D976-4BAE-9B9E-67730920C5D9', 10)
-
-# parse_offers('905DD217-E592-4609-A9F0-6343EF70FD02',20)
-
-# parse_status_of_trades(10)
 
 
 def submit_offer(bid_id, offer_id, user_id, token):
@@ -236,7 +267,7 @@ def submit_offer(bid_id, offer_id, user_id, token):
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*',
     'Referer': 'https://ppt.butb.by/ppt-new/catalog-demands',
-    'x-auth-token': '{C99967A4-1A46-400F-A086-53FAE7E46D43}',
+    'x-auth-token': '{'+f'{token}'+'}',
     'sec-ch-ua-platform': '"Windows"',
 }
 
@@ -245,8 +276,18 @@ def submit_offer(bid_id, offer_id, user_id, token):
     }
     try:
         # response = requests.post(f'https://ppt.butb.by/PPT-Rest/api/counteroffers/{bid_id}', headers=headers, json=json_data)
+        bid = Bid.objects.get(purchase_order=int(bid_id))
+        offer = Offer.objects.get(number=offer_id)
+        bid.offer.add(offer)
         Bid.objects.filter(purchase_order=int(bid_id)).update(trader=user_id)
-        Offer.objects.filter(number=str(offer_id)).update(trader=user_id, bid=bid_id)
+        Offer.objects.filter(number=int(offer_id)).update(trader=user_id)
         return 200
     except Exception as e:
         raise e
+
+if __name__ == '__main__':
+    get_offers_for_bid(539014,'37BF5AA0-D976-4BAE-9B9E-67730920C5D9', 10)
+
+    parse_offers('905DD217-E592-4609-A9F0-6343EF70FD02',20)
+
+    parse_status_of_trades('C99967A4-1A46-400F-A086-53FAE7E46D43',10)

@@ -14,8 +14,8 @@ urlpatterns = [
     path('', include(router.urls)),
     path('all_bids/', parse_all_bid, name = 'all-bids'),
     path('all_offers/', parse_all_offers, name = 'all-offers'),
-    path('parse_offers_for_bid', parse_offers_for_bid, name='parse-offers-for-bid'),
+    # path('parse_offers_for_bid', parse_offers_for_bid, name='parse-offers-for-bid'),
     path('offers_for_bid/',BidOffersView.as_view(), name='offers_for_bid'),
-    path('parse-trade-status/', parse_trade_status, name='parse-statuses'),
+    path('parse_trade_status/', parse_trade_status, name='parse-statuses'),
     path('submit_offer/', submit_an_offer, name ='submit')
 ]

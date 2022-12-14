@@ -7,6 +7,7 @@ sys.path.append(r"/home/daniil/codesafe/butb/MangerWork-dev/app")
 import os
 import django
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 django.setup()
@@ -111,7 +112,7 @@ def parse_bid(num_of_pages: int):
                     currency = bid_json['currency'],
                     technical_documentation_file_name = None,
                     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
-                    scraping_date = datetime.now(),
+                    scraping_date = timezone.now(),
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
                     number_of_subcount = bid_json.get('viewSubcount') if bid_json.get('viewSubcount') else None,
@@ -140,7 +141,7 @@ def parse_bid(num_of_pages: int):
                     currency = bid_json['currency'],
                     technical_documentation_file_name = None,
                     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
-                    scraping_date = datetime.now(),
+                    scraping_date = timezone.now(),
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
                     number_of_subcount = bid_json.get('viewSubcount') if bid_json.get('viewSubcount') else None,
@@ -151,7 +152,7 @@ def parse_bid(num_of_pages: int):
                 break
 
 if __name__ == '__main__':
-    r = parse_bid(45)
+    r = parse_bid(100)
     
 
 
