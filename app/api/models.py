@@ -101,17 +101,6 @@ class Offer(models.Model):
 
 
 
-class Arhive(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
-    bid = models.OneToOneField(Bid,
-        to_field='purchase_order',
-        on_delete=models.DO_NOTHING, primary_key=True)
-
-
-
-
-
-
 class Auth_token(models.Model):
     value = models.CharField('auth-token', max_length=255)
 

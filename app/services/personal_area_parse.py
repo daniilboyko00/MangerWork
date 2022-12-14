@@ -14,7 +14,7 @@ from dateutil import parser
 
 
 
-def parse_status_of_trades(pages):
+def parse_status_of_trades(token,pages):
     cookies = {
     'session-cookie': '1730597102a006174148f3bcbeb261f5bb9fda7a3b13720d446e24a3eb4d82c71ec6c71f3733a3f12a36a7d6952eca14',
     }
@@ -34,7 +34,7 @@ def parse_status_of_trades(pages):
         'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'x-auth-token': '{37BF5AA0-D976-4BAE-9B9E-67730920C5D9}',
+        'x-auth-token': '{'+f'{token}'+'}',
         'x-language': 'ru',
     }
     for i in range(pages):
@@ -60,7 +60,6 @@ def parse_status_of_trades(pages):
         response = requests.post('https://ppt.butb.by/PPT-Rest/api/trades', cookies=cookies, headers=headers, json=json_data)
         for j in range(len(response.json()['list'])):
             if len(response.json()['list']) < 2:
-                print(i)
                 break
             trade_json = response.json()['list'][j]
             Bid.objects.filter(purchase_order = int(trade_json['id'])).update(
@@ -226,3 +225,28 @@ def get_offers_for_bid(bid_id:int, token:str, pages:int) -> None:
 # parse_offers('905DD217-E592-4609-A9F0-6343EF70FD02',20)
 
 # parse_status_of_trades(10)
+
+
+def submit_offer(bid_id, offer_id, user_id, token):
+    headers = {
+    'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+    'x-language': 'ru',
+    'sec-ch-ua-mobile': '?0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json, text/plain, */*',
+    'Referer': 'https://ppt.butb.by/ppt-new/catalog-demands',
+    'x-auth-token': '{C99967A4-1A46-400F-A086-53FAE7E46D43}',
+    'sec-ch-ua-platform': '"Windows"',
+}
+
+    json_data = {
+        'idOffer': offer_id,
+    }
+    try:
+        # response = requests.post(f'https://ppt.butb.by/PPT-Rest/api/counteroffers/{bid_id}', headers=headers, json=json_data)
+        Bid.objects.filter(purchase_order=int(bid_id)).update(trader=user_id)
+        Offer.objects.filter(number=str(offer_id)).update(trader=user_id, bid=bid_id)
+        return 200
+    except Exception as e:
+        raise e

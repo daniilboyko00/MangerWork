@@ -83,6 +83,20 @@ class BidOffersView(generics.ListAPIView):
 
 @api_view(['GET', 'POST'])
 def submit_an_offer(request, *args, **kwargs):
-    pass
+    try:
+        bid_id = int(request.GET.get('bid_id'))
+        offer_id = str(request.GET.get('offer_id'))
+        user_id = int(request.GET.get('user_id'))
+        personal_area_parse.submit_offer(bid_id=bid_id,offer_id=offer_id,user_id=user_id,token=None)
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=e.__str__())
 
 
+@api_view(['GET'])
+def parse_trade_status(request, *args, **kwargs):
+    try:
+        personal_area_parse.parse_status_of_trades(200)
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(status=status.HTTP_404_NOT_FOUND)
