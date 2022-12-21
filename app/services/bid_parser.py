@@ -92,10 +92,11 @@ def parse_bid(num_of_pages: int):
             bid_json = response.json()['list'][j]
             try:
                 if str(bid_json['statusOffer']['code']) == '5':
-                    Bid.objects.filter(purchase_order = int(bid_json['id'])).delete()
+                    print(2)
+                    Bid.objects.filter(purchase_order = int(bid_json['id'])).update(status='INACTIVE')
                     continue
             except:
-                pass
+                print(3)
             try:
                 bid = Bid(
                     purchase_order = int(bid_json['id']),
@@ -121,7 +122,7 @@ def parse_bid(num_of_pages: int):
                     scraping_date = datetime.now(tz=timezone.utc),
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
-                    number_of_subcount = bid_json.get('viewSubcount') if bid_json.get('viewSubcount') else None,
+                    number_of_subcount = bid_json.get('bidcount') if bid_json.get('bidcount') else None,
                     subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}"
                     )
                 bid.save()
@@ -149,7 +150,7 @@ def parse_bid(num_of_pages: int):
                     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
-                    number_of_subcount = bid_json.get('viewSubcount') if bid_json.get('viewSubcount') else None,
+                    number_of_subcount = bid_json.get('bidcount') if bid_json.get('bidcount') else None,
                     subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}",
                     scraping_date = datetime.now(tz=timezone.utc)
                 )

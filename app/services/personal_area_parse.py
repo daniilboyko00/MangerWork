@@ -68,6 +68,7 @@ def parse_status_of_trades(token,pages):
             try:
                 bid = Bid.objects.get(purchase_order=int(trade_json['id']))
             except Bid.DoesNotExist:
+                print(2)
                 new_bid = Bid(
                     purchase_order = int(trade_json['id']),
                     application_date =  None,
@@ -282,7 +283,6 @@ def submit_offer(bid_id, offer_id, user_id, token):
         offer = Offer.objects.get(number=offer_id)
         bid.offer.add(offer)
         Bid.objects.filter(purchase_order=int(bid_id)).update(trader=user_id, activityStatus=1)
-
         return 200
     except Exception as e:
         raise e
@@ -332,5 +332,5 @@ def parse_notification(token):
 
 
 if __name__ == '__main__':
-
-    parse_notification('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6')
+    parse_status_of_trades('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6', 20)
+    # parse_notification('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6')
