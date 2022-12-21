@@ -2,7 +2,7 @@ import requests
 import time
 import sys
 
-sys.path.append(r"/home/daniil/codesafe/butb/MangerWork-dev/app")
+sys.path.append(r"D:\MangerWork\app")
 
 import os
 import django
@@ -91,6 +91,12 @@ def parse_bid(num_of_pages: int):
         for j in range(len(response.json()['list'])):
             bid_json = response.json()['list'][j]
             try:
+                if str(bid_json['statusOffer']['code']) == '5':
+                    Bid.objects.filter(purchase_order = int(bid_json['id'])).delete()
+                    continue
+            except:
+                pass
+            try:
                 bid = Bid(
                     purchase_order = int(bid_json['id']),
                     application_date =  parser.parse(bid_json['activity']),
@@ -112,7 +118,7 @@ def parse_bid(num_of_pages: int):
                     currency = bid_json['currency'],
                     technical_documentation_file_name = None,
                     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
-                    scraping_date = timezone.now(),
+                    scraping_date = datetime.now(tz=timezone.utc),
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
                     number_of_subcount = bid_json.get('viewSubcount') if bid_json.get('viewSubcount') else None,
@@ -141,11 +147,11 @@ def parse_bid(num_of_pages: int):
                     currency = bid_json['currency'],
                     technical_documentation_file_name = None,
                     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
-                    scraping_date = timezone.now(),
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
                     number_of_subcount = bid_json.get('viewSubcount') if bid_json.get('viewSubcount') else None,
-                    subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}"
+                    subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}",
+                    scraping_date = datetime.now(tz=timezone.utc)
                 )
             if len(response.json()['list']) < 80:
                 print(i, 'thats all')
@@ -153,6 +159,3 @@ def parse_bid(num_of_pages: int):
 
 if __name__ == '__main__':
     r = parse_bid(100)
-    
-
-
