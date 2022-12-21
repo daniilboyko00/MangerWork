@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Bid, Offer, MyCustomUser, Auth_token
+from .models import Bid, Offer, Auth_token
 from django.views import View
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -7,17 +7,13 @@ from services import detail_bid_parse, bid_parser, personal_area_parse
 from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound
-from api.serializers import BidSerializer, OfferSerializer, CustomUserSerializer
+from api.serializers import BidSerializer, OfferSerializer
 from rest_framework import serializers, status, generics
 
 TOKEN = list(Auth_token.objects.filter(id = 1))[0].value
 print(TOKEN)
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = MyCustomUser.objects.all().order_by('-date_joined')
-    serializer_class = CustomUserSerializer
-    # permission_classes = [permissions.IsAuthenticated]
 
 
 class BidViewSet(viewsets.ModelViewSet):
@@ -102,6 +98,15 @@ def submit_an_offer(request, *args, **kwargs):
 def parse_trade_status(request, *args, **kwargs):
     try:
         personal_area_parse.parse_status_of_trades(TOKEN,200)
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=e.__str__())
+
+
+@api_view(['GET'])
+def parse_notification(request, *args, **kwargs):
+    try:
+        personal_area_parse.parse_notification(TOKEN)
         return Response(status=status.HTTP_200_OK)
     except Exception as e:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=e.__str__())

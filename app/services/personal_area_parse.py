@@ -10,7 +10,7 @@ sys.path.append(r"D:\MangerWork\app")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 django.setup()
 
-from api.models import Offer, Bid
+from api.models import Offer, Bid, Notification
 from dateutil import parser
 
 
@@ -115,7 +115,7 @@ def parse_status_of_trades(token,pages):
 
 def parse_offers(token: str ,pages: int):
     cookies = {
-        'session-cookie': '1730000c9cd8ab834148f3bcbeb261f54562d4ac0d03074ae80fe13e8a5569d552439deb96928510d3516b2837008b77',
+        'session-cookie': '1730f7b9122a04d14148f3bcbeb261f5312b4a84cf06994c152e295b13f7925d5986b1ed8220d9f596429b09510f1b90',
     }
     headers = {
         'Accept': 'application/json, text/plain, */*',
@@ -196,6 +196,7 @@ def parse_offers(token: str ,pages: int):
                     )
                     offer.save()
                 except IntegrityError as e:
+                    print(e)
                     Offer.objects.filter(number=offer_json['id']).update(
                         number = offer_json['id'],
                         product_name = offer_json['productname'],
@@ -210,6 +211,7 @@ def parse_offers(token: str ,pages: int):
                     )
             if len(response.json()['list'])< 2:
                 print(i,'thats all')
+                break
         except Exception as e:
             raise e
 
@@ -279,15 +281,56 @@ def submit_offer(bid_id, offer_id, user_id, token):
         bid = Bid.objects.get(purchase_order=int(bid_id))
         offer = Offer.objects.get(number=offer_id)
         bid.offer.add(offer)
-        Bid.objects.filter(purchase_order=int(bid_id)).update(trader=user_id)
-        Offer.objects.filter(number=int(offer_id)).update(trader=user_id)
+        Bid.objects.filter(purchase_order=int(bid_id)).update(trader=user_id, activityStatus=1)
+
         return 200
     except Exception as e:
         raise e
 
+
+def parse_notification(token):
+    cookies = {
+        '_gcl_au': '1.1.996378576.1671528647',
+        '_gid': 'GA1.2.1922921561.1671528647',
+        '_ym_uid': '1671528647293545921',
+        '_ym_d': '1671528647',
+        '_ga': 'GA1.1.1588590972.1671528647',
+        'session-cookie': '173276804bb64ce04148f3bcbeb261f56dd0969f7c1f6b4cc80c1c7ec78b18bde38c09fc2a4ac127888f9d8caac21f34',
+        '_ga_JBLWJN4EG6': 'GS1.1.1671534419.2.1.1671534420.59.0.0',
+    }
+
+    headers = {
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Connection': 'keep-alive',
+        # 'Cookie': '_gcl_au=1.1.996378576.1671528647; _gid=GA1.2.1922921561.1671528647; _ym_uid=1671528647293545921; _ym_d=1671528647; _ga=GA1.1.1588590972.1671528647; session-cookie=173276804bb64ce04148f3bcbeb261f56dd0969f7c1f6b4cc80c1c7ec78b18bde38c09fc2a4ac127888f9d8caac21f34; _ga_JBLWJN4EG6=GS1.1.1671534419.2.1.1671534420.59.0.0',
+        'Referer': 'https://ppt.butb.by/ppt-new/profile/my-profile',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'x-auth-token': '{'+f'{token}'+'}',
+        'x-language': 'ru',
+    }
+
+    response = requests.get('https://ppt.butb.by/PPT-Rest/api/notify/all', cookies=cookies, headers=headers)
+    print(response.json()['list'])
+    for notify in response.json()['list']:
+        try:
+            notification = Notification(
+                id = notify['idNotify'],
+                date = parser.parse(notify['dateReg']),
+                message = notify['message']
+            )
+            notification.save()
+        except Exception as e:
+            print(e)
+            continue
+
+
 if __name__ == '__main__':
-    get_offers_for_bid(539014,'37BF5AA0-D976-4BAE-9B9E-67730920C5D9', 10)
 
-    parse_offers('905DD217-E592-4609-A9F0-6343EF70FD02',20)
-
-    parse_status_of_trades('C99967A4-1A46-400F-A086-53FAE7E46D43',10)
+    parse_notification('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6')

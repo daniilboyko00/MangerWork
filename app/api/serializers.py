@@ -1,5 +1,5 @@
 from rest_framework import serializers, fields
-from .models import Bid, Offer, MyCustomUser
+from .models import Bid, Offer, Notification
 
 
 
@@ -22,7 +22,8 @@ class BidSerializer(serializers.ModelSerializer):
         }
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class NotificationSerizlizer(serializers.ModelSerializer):
     class Meta:
-        model = MyCustomUser
-        fields = ['email','full_name']
+        model = Notification
+        fields = '__all__'
+        lookup_field = 'id'
