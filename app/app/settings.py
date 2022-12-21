@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-%t#2g#gx=kgapx5nt-1rijl33+r76_+=ei2^l!2zhwtj1j4zi8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['monometr.ru', 'www.monometr.ru','127.0.0.1']
 
 
 # Application definition
@@ -114,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Europe/London'
+TIME_ZONE = 'Asia/Qostanay'
 
 USE_I18N = True
 
