@@ -93,13 +93,13 @@ def parse_bid(num_of_pages: int):
             try:
                 if str(bid_json['statusOffer']['code']) == '5':
                     print(2)
-                    Bid.objects.filter(purchase_order = int(bid_json['id'])).update(status='INACTIVE')
+                    Bid.objects.filter(id = int(bid_json['id'])).update(status='INACTIVE')
                     continue
             except:
                 print(3)
             try:
                 bid = Bid(
-                    purchase_order = int(bid_json['id']),
+                    id = int(bid_json['id']),
                     application_date =  parser.parse(bid_json['activity']),
                     application_validity_period = parser.parse(bid_json['validity']),
                     procurement_name = bid_json['productname'],
@@ -127,8 +127,8 @@ def parse_bid(num_of_pages: int):
                     )
                 bid.save()
             except IntegrityError:
-                Bid.objects.filter(purchase_order=bid_json['id']).update(
-                    purchase_order = int(bid_json['id']),
+                Bid.objects.filter(id=bid_json['id']).update(
+                    id = int(bid_json['id']),
                     application_date =  parser.parse(bid_json['activity']),
                     application_validity_period = parser.parse(bid_json['validity']),
                     procurement_name = bid_json['productname'],

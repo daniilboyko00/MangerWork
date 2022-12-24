@@ -3,7 +3,7 @@ from django.utils import timezone
 
 
 class Offer(models.Model):
-    number = models.BigIntegerField( null=False, unique=True, primary_key=True)
+    id = models.BigIntegerField(null=False, unique=True, primary_key=True)
     product_name = models.TextField()
     price = models.FloatField()
     currency = models.CharField(max_length=10)
@@ -13,7 +13,7 @@ class Offer(models.Model):
     validity = models.DateTimeField()
     trade_category = models.CharField(max_length=255)
     country = models.CharField( max_length=255, null=True)
-    status_in_trade = models.CharField(max_length=255, default=None)
+    status_in_trade = models.CharField(max_length=255, default=None, null=True)
     status = models.CharField(max_length=100, null=True)
 
 
@@ -37,7 +37,7 @@ class Bid(models.Model):
         (4, 'result trades')
     )
 
-    purchase_order  = models.IntegerField(blank=False, null=False, unique=True)
+    id  = models.IntegerField(blank=False, null=False, unique=True,primary_key=True)
     application_date = models.DateTimeField(null=True)
     application_validity_period = models.DateTimeField(null=True)
     procurement_name = models.TextField( null=True)
@@ -68,6 +68,8 @@ class Bid(models.Model):
     trade_status_message = models.CharField(max_length=255, null=True, default=None)
     offer = models.ManyToManyField(Offer)
     activityStatus = models.IntegerField(null=True, default=0)
+    statusOrders = models.CharField(max_length=100, default=None)
+    statusOrderNotification = models.IntegerField(default=None)
 
 
 class Auth_token(models.Model):
