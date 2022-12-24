@@ -14,6 +14,7 @@ class Offer(models.Model):
     trade_category = models.CharField(max_length=255)
     country = models.CharField( max_length=255, null=True)
     status_in_trade = models.CharField(max_length=255, default=None)
+    status = models.CharField(max_length=100, null=True)
 
 
     def __str__(self) -> str:
@@ -78,4 +79,4 @@ class Notification(models.Model):
     id = models.BigIntegerField('id', primary_key=True)
     date = models.DateTimeField()
     message = models.TextField('message')
-    
+    is_read = models.BooleanField()
