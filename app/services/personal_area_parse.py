@@ -136,85 +136,88 @@ def parse_offers(token: str ,pages: int):
         'x-auth-token': '{'+f'{token}'+'}',
         'x-language': 'ru',
     }
-    for i in range(pages):
-        json_data = {
-            'status': 2,
-            'mainFilters': {
-                'typeTrade': {
-                    'rise': False,
-                    'simple': False,
+    for status in range(1,5):
+        for i in range(pages):
+            json_data = {
+                'status':status,
+                'mainFilters': {
+                    'typeTrade': {
+                        'rise': False,
+                        'simple': False,
+                    },
+                    'statusDemand': {
+                        'open': False,
+                        'close': False,
+                    },
+                    'tradingDate': None,
+                    'validity': None,
+                    'currency': None,
+                    'vatRate': [],
+                    'price': [
+                        None,
+                        None,
+                    ],
+                    'payment': {
+                        'upon': False,
+                        'reg': False,
+                    },
+                    'delivery': None,
+                    'sellerCntry': None,
+                    'productCntry': None,
+                    'locationCntry': None,
                 },
-                'statusDemand': {
-                    'open': False,
-                    'close': False,
+                'searchFilters': {
+                    'searchString': None,
+                    'productName': None,
+                    'fabricator': None,
+                    'regNum': None,
+                    'description': None,
+                    'tnvedCode': None,
                 },
-                'tradingDate': None,
-                'validity': None,
-                'currency': None,
-                'vatRate': [],
-                'price': [
-                    None,
-                    None,
-                ],
-                'payment': {
-                    'upon': False,
-                    'reg': False,
+                'paginationFilters': {
+                    'page': i,
+                    'pageSize': 100,
                 },
-                'delivery': None,
-                'sellerCntry': None,
-                'productCntry': None,
-                'locationCntry': None,
-            },
-            'searchFilters': {
-                'searchString': None,
-                'productName': None,
-                'fabricator': None,
-                'regNum': None,
-                'description': None,
-                'tnvedCode': None,
-            },
-            'paginationFilters': {
-                'page': i,
-                'pageSize': 100,
-            },
-        }
-        response = requests.post('https://ppt.butb.by/PPT-Rest/api/offers/own', cookies=cookies, headers=headers, json=json_data)
-        try:
-            for j in range(len(response.json()['list'])):
-                offer_json = response.json()['list'][j]
-                try:
-                    offer = Offer(
-                        number = int(offer_json['id']),
-                        product_name = offer_json['productname'],
-                        country = offer_json['country'],
-                        price = float(offer_json['price']) ,
-                        currency = offer_json['currency'] ,
-                        full_cost = int(offer_json['fullCost']),
-                        qntunits =offer_json['qntunits'] ,
-                        quantity = offer_json['quantity'] ,
-                        validity = parser.parse(offer_json['validity']) ,
-                        trade_category = offer_json['attrTradings']['name']
-                    )
-                    offer.save()
-                except IntegrityError as e:
-                    print(e)
-                    Offer.objects.filter(number=offer_json['id']).update(
-                        number = offer_json['id'],
-                        product_name = offer_json['productname'],
-                        country = offer_json['country'],
-                        price = float(offer_json['price']) ,
-                        currency = offer_json['currency'] ,
-                        full_cost = int(offer_json['fullCost']),
-                        qntunits =offer_json['qntunits'] ,
-                        quantity = offer_json['quantity'] ,
-                        validity = parser.parse(offer_json['validity']) ,
-                        trade_category = offer_json['attrTradings']['name']
-                    )
-            if len(response.json()['list'])< 2:
-                print(i,'thats all')
-                break
-        except Exception as e:
-            raise e
+            }
+            response = requests.post('https://ppt.butb.by/PPT-Rest/api/offers/own', cookies=cookies, headers=headers, json=json_data)
+            try:
+                for j in range(len(response.json()['list'])):
+                    offer_json = response.json()['list'][j]
+                    try:
+                        offer = Offer(
+                            number = int(offer_json['id']),
+                            product_name = offer_json['productname'],
+                            country = offer_json['country'],
+                            price = float(offer_json['price']) ,
+                            currency = offer_json['currency'] ,
+                            full_cost = int(offer_json['fullCost']),
+                            qntunits =offer_json['qntunits'] ,
+                            quantity = offer_json['quantity'] ,
+                            validity = parser.parse(offer_json['validity']) ,
+                            trade_category = offer_json['attrTradings']['name'],
+                            status = offer_json['statusOffer']['name']
+                        )
+                        offer.save()
+                    except IntegrityError as e:
+                        print(e)
+                        Offer.objects.filter(number=offer_json['id']).update(
+                            number = offer_json['id'],
+                            product_name = offer_json['productname'],
+                            country = offer_json['country'],
+                            price = float(offer_json['price']) ,
+                            currency = offer_json['currency'] ,
+                            full_cost = int(offer_json['fullCost']),
+                            qntunits =offer_json['qntunits'] ,
+                            quantity = offer_json['quantity'] ,
+                            validity = parser.parse(offer_json['validity']) ,
+                            trade_category = offer_json['attrTradings']['name'],
+                            status = offer_json['statusOffer']['name']
+                        )
+                if len(response.json()['list'])< 2:
+                    print(i,'thats all')
+                    break
+            except Exception as e:
+                raise e
 
 
 
@@ -319,18 +322,22 @@ def parse_notification(token):
     response = requests.get('https://ppt.butb.by/PPT-Rest/api/notify/all', cookies=cookies, headers=headers)
     print(response.json()['list'])
     for notify in response.json()['list']:
-        try:
-            notification = Notification(
-                id = notify['idNotify'],
-                date = parser.parse(notify['dateReg']),
-                message = notify['message']
-            )
-            notification.save()
-        except Exception as e:
-            print(e)
+        if Notification.objects.filter(id=int(notify['idNotify'])).exists():
             continue
+        else:
+            try:
+                notification = Notification(
+                    id = notify['idNotify'],
+                    date = parser.parse(notify['dateReg']),
+                    message = notify['message'],
+                    is_read = 1
+                )
+                notification.save()
+            except Exception as e:
+                print(e)
+                continue
 
 
 if __name__ == '__main__':
-    parse_status_of_trades('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6', 20)
-    # parse_notification('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6')
+    # parse_status_of_trades('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6', 20)
+    parse_offers('5EEC8799-AF72-4D3C-9D05-76E2EC68F2AD',10)
