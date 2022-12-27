@@ -61,13 +61,13 @@ def parse_status_of_trades(token,pages):
         response = requests.post('https://ppt.butb.by/PPT-Rest/api/trades', cookies=cookies, headers=headers, json=json_data)
         for j in range(len(response.json()['list'])):
             trade_json = response.json()['list'][j]
-            Bid.objects.filter(id = int(trade_json['id'])).update(
-                trade_status = int(trade_json['tradeStatus']['code']),
-                trade_status_message = trade_json['tradeStatus']['message']
-            )
-            try:
-                bid = Bid.objects.get(id=int(trade_json['id']))
-            except Bid.DoesNotExist:
+            bid = Bid.objects.get(id=int(trade_json['id']))
+            if Bid.objects.filter(id=int(trade_json['id'])).exists():
+                Bid.objects.filter(id = int(trade_json['id'])).update(
+                    trade_status = int(trade_json['tradeStatus']['code']),
+                    trade_status_message = trade_json['tradeStatus']['message']
+                )
+            else:
                 print(2)
                 new_bid = Bid(
                     id = int(trade_json['id']),
@@ -94,20 +94,22 @@ def parse_status_of_trades(token,pages):
                     slug = int(trade_json['id']),
                     tnvedcode = None,
                     number_of_subcount = trade_json.get('viewSubcount') if trade_json.get('viewSubcount') else None,
-                    subcount_link = None
+                    subcount_link = None,
+                    trade_status = trade_json['tradeStatus']['code'],
+                    activityStatus = 1 if trade_json['tradeStatus']['code'] == 2 else 0,
+                    statusOrders = 0,
                     )
                 new_bid.save()
                 bid = Bid.objects.get(id=int(trade_json['id']))
             if trade_json.get('offers'):
                 for offer in trade_json['offers']:
-                    try:
-                        offer_obj = Offer.objects.get(id=int(offer['id']))
-                    except Offer.DoesNotExist:
-                        continue
+                    offer_obj = Offer.objects.get(id=int(offer['id']))
                     Offer.objects.filter(id=int(offer['id'])).update(
-                        status_in_trade = offer['statusDescription']
+                    status_in_trade = offer['statusDescription']
                     )
                     bid.offer.add(offer_obj)
+                    if offer['statusDescription'] == 'Отклонено':
+                        Bid.objects.filter(id=int(trade_json['id'])).update(statusOrderNotification = 1)
         if response.json()['list'] == []:
             break
 
@@ -344,5 +346,5 @@ def parse_notification(token):
 
 
 if __name__ == '__main__':
-    # parse_status_of_trades('75D3B99E-9E5C-46D1-B5BA-6B9C9FECADB6', 20)
+    parse_status_of_trades('F21F0054-B241-4BE0-96DC-E2CEBCD45D44', 50)
     pass

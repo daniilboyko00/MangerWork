@@ -37,7 +37,7 @@ class Bid(models.Model):
         (4, 'result trades')
     )
 
-    id  = models.IntegerField(blank=False, null=False, unique=True,primary_key=True)
+    id  = models.BigIntegerField(blank=False, null=False, unique=True,primary_key=True)
     application_date = models.DateTimeField(null=True)
     application_validity_period = models.DateTimeField(null=True)
     procurement_name = models.TextField( null=True)
@@ -68,8 +68,8 @@ class Bid(models.Model):
     trade_status_message = models.CharField(max_length=255, null=True, default=None)
     offer = models.ManyToManyField(Offer)
     activityStatus = models.IntegerField(null=True, default=0)
-    statusOrders = models.CharField(max_length=100, default=None)
-    statusOrderNotification = models.IntegerField(default=None)
+    statusOrders = models.CharField(max_length=100, default=None, null=False)
+    statusOrderNotification = models.IntegerField(default=None, null=True)
 
 
 class Auth_token(models.Model):
