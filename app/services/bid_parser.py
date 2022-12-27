@@ -14,7 +14,7 @@ django.setup()
 
 from api.models import Bid
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def parse_bid(num_of_pages: int):
@@ -97,7 +97,7 @@ def parse_bid(num_of_pages: int):
                     continue
             except:
                 print(3)
-            try:
+            if not Bid.objects.filter(id=int(bid_json['id'])).exists():
                 bid = Bid(
                     id = int(bid_json['id']),
                     application_date =  parser.parse(bid_json['activity']),
@@ -119,41 +119,43 @@ def parse_bid(num_of_pages: int):
                     currency = bid_json['currency'],
                     technical_documentation_file_name = None,
                     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
-                    scraping_date = datetime.now(tz=timezone.utc),
-                    slug = int(bid_json['id']),
-                    tnvedcode = int(bid_json['tnvedcode']),
-                    number_of_subcount = bid_json.get('bidcount') if bid_json.get('bidcount') else None,
-                    subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}"
-                    )
-                bid.save()
-            except IntegrityError:
-                Bid.objects.filter(id=bid_json['id']).update(
-                    id = int(bid_json['id']),
-                    application_date =  parser.parse(bid_json['activity']),
-                    application_validity_period = parser.parse(bid_json['validity']),
-                    procurement_name = bid_json['productname'],
-                    product_information = None,
-                    brand = None,
-                    buyer_country = bid_json['country'],
-                    qntunits = bid_json['qntunits'],
-                    producing_country = None,
-                    terms_of_payment = None,
-                    delivery_conditions = None,
-                    delivery_time = None,
-                    exposure_time =  parser.parse(bid_json['exposure']),
-                    application_is_bidding = bid_json['attrTradings']['name'],
-                    price = bid_json['price'],
-                    number_of_goods = bid_json['quantity'],
-                    cost = bid_json['fullCost'],
-                    currency = bid_json['currency'],
-                    technical_documentation_file_name = None,
-                    application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
+                    scraping_date = datetime.now(tz=timezone.utc) + timedelta(hours=3),
                     slug = int(bid_json['id']),
                     tnvedcode = int(bid_json['tnvedcode']),
                     number_of_subcount = bid_json.get('bidcount') if bid_json.get('bidcount') else None,
                     subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}",
-                    scraping_date = datetime.now(tz=timezone.utc)
-                )
+                    activityStatus = 0,
+                    statusOrders = 0
+                    )
+                bid.save()
+            else:
+                Bid.objects.filter(id=bid_json['id']).update(scraping_date = datetime.now(tz=timezone.utc) + timedelta(hours=3))
+                #     id = int(bid_json['id']),
+                #     application_date =  parser.parse(bid_json['activity']),
+                #     application_validity_period = parser.parse(bid_json['validity']),
+                #     procurement_name = bid_json['productname'],
+                #     product_information = None,
+                #     brand = None,
+                #     buyer_country = bid_json['country'],
+                #     qntunits = bid_json['qntunits'],
+                #     producing_country = None,
+                #     terms_of_payment = None,
+                #     delivery_conditions = None,
+                #     delivery_time = None,
+                #     exposure_time =  parser.parse(bid_json['exposure']),
+                #     application_is_bidding = bid_json['attrTradings']['name'],
+                #     price = bid_json['price'],
+                #     number_of_goods = bid_json['quantity'],
+                #     cost = bid_json['fullCost'],
+                #     currency = bid_json['currency'],
+                #     technical_documentation_file_name = None,
+                #     application_link = f"https://ppt.butb.by/ppt-new/catalog-demands/order/{bid_json['id']}",
+                #     slug = int(bid_json['id']),
+                #     tnvedcode = int(bid_json['tnvedcode']),
+                #     number_of_subcount = bid_json.get('bidcount') if bid_json.get('bidcount') else None,
+                #     subcount_link = f"https://ppt.butb.by/ppt-new/import-substitution/offers?tnvedCode={bid_json['tnvedcode']}",
+                #     scraping_date = datetime.now(tz=timezone.utc)
+                # )
             if len(response.json()['list']) < 80:
                 print(i, 'thats all')
                 break

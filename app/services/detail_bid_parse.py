@@ -54,7 +54,7 @@ def save_and_return_detail_bid_json(id:int):
         'terms_of_payment':resp_json['termsOfSale']['deliverytime']['description'],
         'delivery_conditions':resp_json['termsOfSale']['deliverycond']['description'],
     }
-    Bid.objects.filter(purchase_order=id).\
+    Bid.objects.filter(id=id).\
         update(brand=bid_data['brandname'],
         producing_country=bid_data['producing_country'],
         product_information=bid_data['product_information'],
