@@ -15,6 +15,7 @@ class Offer(models.Model):
     country = models.CharField( max_length=255, null=True)
     status_in_trade = models.CharField(max_length=255, default=None, null=True)
     status = models.CharField(max_length=100, null=True)
+    code = models.CharField(max_length=100, null=True)
 
 
     def __str__(self) -> str:
@@ -70,7 +71,7 @@ class Bid(models.Model):
     activityStatus = models.IntegerField(null=True, default=0)
     statusOrders = models.CharField(max_length=100, default=None, null=False)
     statusOrderNotification = models.IntegerField(default=None, null=True)
-
+    
 
 class Auth_token(models.Model):
     value = models.CharField('auth-token', max_length=255)

@@ -185,7 +185,10 @@ def parse_offers(token: str ,pages: int):
             try:
                 for j in range(len(response.json()['list'])):
                     offer_json = response.json()['list'][j]
+                    code_js = None
                     try:
+                        if status == 2:
+                            code_js = requests.get(f"https://ppt.butb.by/PPT-Rest/api/offers/{int(offer_json['id'])}", cookies=cookies, headers=headers).json()['product']['gpccode']['code']
                         offer = Offer(
                             id = int(offer_json['id']),
                             product_name = offer_json['productname'],
@@ -197,11 +200,14 @@ def parse_offers(token: str ,pages: int):
                             quantity = offer_json['quantity'] ,
                             validity = parser.parse(offer_json['validity']) ,
                             trade_category = offer_json['attrTradings']['name'],
-                            status = offer_json['statusOffer']['name']
+                            status = offer_json['statusOffer']['name'],
+                            code = code_js
                         )
                         offer.save()
                     except IntegrityError as e:
-                        print(e)
+                        code_js = None
+                        if status == 2:
+                            code_js = requests.get(f"https://ppt.butb.by/PPT-Rest/api/offers/{int(offer_json['id'])}", cookies=cookies, headers=headers).json()['product']['gpccode']['code']
                         Offer.objects.filter(id=offer_json['id']).update(
                             id = offer_json['id'],
                             product_name = offer_json['productname'],
@@ -213,7 +219,8 @@ def parse_offers(token: str ,pages: int):
                             quantity = offer_json['quantity'] ,
                             validity = parser.parse(offer_json['validity']) ,
                             trade_category = offer_json['attrTradings']['name'],
-                            status = offer_json['statusOffer']['name']
+                            status = offer_json['statusOffer']['name'],
+                            code = code_js 
                         )
                 if len(response.json()['list'])< 2:
                     print(i,'thats all')
@@ -346,5 +353,5 @@ def parse_notification(token):
 
 
 if __name__ == '__main__':
-    parse_status_of_trades('F21F0054-B241-4BE0-96DC-E2CEBCD45D44', 50)
+    parse_status_of_trades('7541D78D-081B-465A-9A30-3B05C76E7508', 50)
     pass
